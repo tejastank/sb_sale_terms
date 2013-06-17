@@ -33,9 +33,20 @@ class sale_order(osv.osv):
 
     def _get_default_note(self, cr, uid, context=None):
         language = self.pool.get('res.users').browse(cr, uid, uid, context=context).lang
-        print context, language
-        company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.sale_notes
-        return company_id
+        context['lang'] = language
+        sale_notes = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.sale_notes
+        return sale_notes
+
+    def onchange_partner_id(self, cr, uid, ids, part, context=None):
+        res =  super(sale_order, self).onchange_partner_id( cr, uid, ids, part, context=context)
+        if part:
+            lang = self.pool.get('res.partner').browse(cr, uid, part, context=context).lang or False
+            if lang:
+                context['lang'] = lang
+            sale_notes = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.sale_notes
+            if sale_notes:
+                res['value']['note'] = sale_notes
+        return res
 
     _defaults = {
         'note': _get_default_note,
